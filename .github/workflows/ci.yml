@@ -1,0 +1,141 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  backend-tests:
+    name: Backend pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "apps/api[dev]" || pip install -r requirements.txt || true
+          # Fallback: install the minimum needed to run the API + tests if no setup.py exists.
+          pip install \
+            "fastapi>=0.115" "uvicorn[standard]>=0.30" "pydantic>=2.7" "pydantic-settings>=2.4" \
+            "python-multipart>=0.0.9" "httpx>=0.27" "pandas>=2.2" "numpy>=1.26,<2.0" \
+            "scipy>=1.13" "duckdb>=1.0" "openpyxl>=3.1" "pyarrow>=16" \
+            "statsforecast>=1.7" "lightgbm>=4.3" "hierarchicalforecast>=0.4" \
+            "anthropic>=0.34" "structlog>=24.0" "sentry-sdk[fastapi]>=2.0" \
+            "python-dotenv>=1.0" "slowapi>=0.1.9" "rich>=13.7" \
+            "pytest>=8.0" "pytest-cov>=5.0" "pyyaml>=6.0"
+
+      - name: Run pytest
+        run: |
+          PYTHONPATH=$PWD pytest apps/api/tests/ -q --tb=short
+        env:
+          PYTHONUNBUFFERED: "1"
+
+  frontend-typecheck:
+    name: Frontend typecheck + lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+
+  playwright-smoke:
+    name: Playwright smoke tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build the Next app
+        run: npm run build
+
+      - name: Run Playwright smoke tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
+  # Optional: agent-eval gate. Gated behind ANTHROPIC_API_KEY being present, so PRs from
+  # external contributors don't fail because we won't share the key with them. Internal
+  # PRs (where the secret is available) run the multi-agent eval at 75% pass rate.
+  agent-eval:
+    name: Agent eval (LLM tasks)
+    runs-on: ubuntu-latest
+    if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    needs: backend-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install \
+            "fastapi>=0.115" "uvicorn[standard]>=0.30" "pydantic>=2.7" "pydantic-settings>=2.4" \
+            "python-multipart>=0.0.9" "httpx>=0.27" "pandas>=2.2" "numpy>=1.26,<2.0" \
+            "scipy>=1.13" "duckdb>=1.0" "openpyxl>=3.1" "pyarrow>=16" \
+            "statsforecast>=1.7" "lightgbm>=4.3" "hierarchicalforecast>=0.4" \
+            "anthropic>=0.34" "structlog>=24.0" "sentry-sdk[fastapi]>=2.0" \
+            "python-dotenv>=1.0" "slowapi>=0.1.9" "rich>=13.7" "pyyaml>=6.0"
+
+      - name: Create demo dataset
+        id: dataset
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # Boot the API in the background, wait for it, create a demo dataset, capture id.
+          mkdir -p ./data/datasets
+          PYTHONPATH=$PWD python -m uvicorn apps.api.main:app --port 8000 &
+          SERVER_PID=$!
+          # Wait until /health is up
+          for i in {1..30}; do
+            if curl -sf http://localhost:8000/health > /dev/null; then break; fi
+            sleep 1
+          done
+          DSID=$(curl -sS -X POST http://localhost:8000/datasets/demo/coffee_perishable | python -c "import json,sys;print(json.load(sys.stdin)['dataset_id'])")
+          echo "dataset_id=${DSID}" >> $GITHUB_OUTPUT
+          # Run the eval. Threshold 75% for multi, 90% for single. Cap to 10 tasks for cost.
+          PYTHONPATH=$PWD python -m apps.api.llm.agent_eval --dataset-id "$DSID" --max 10 --threshold-multi 0.75 --threshold-single 0.9 --no-judge
+          kill $SERVER_PID || true

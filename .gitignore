@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+
+# Data — never commit
+data/
+*.duckdb
+*.duckdb.wal
+
+# Tabular data anywhere — never commit
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.parquet
+*.zip
+*.gz
+*.tar
+*.7z
+
+# M5 raw inputs are downloaded by script, not committed
+apps/api/m5/raw/
+
+# M5 artifacts ARE committed (small, versioned with code) — these whitelist the parquet/json there
+!apps/api/m5/artifacts/
+!apps/api/m5/artifacts/**
+
+# Test fixtures live in tests/, are tiny, and ARE committed
+!apps/api/tests/fixtures/
+!apps/api/tests/fixtures/**
+
+# Secrets / env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+logs/
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+.nyc_output/

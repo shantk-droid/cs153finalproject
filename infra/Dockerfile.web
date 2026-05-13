@@ -1,0 +1,25 @@
+FROM node:20-alpine AS deps
+WORKDIR /repo
+COPY package.json package-lock.json* ./
+COPY apps/web/package.json ./apps/web/
+RUN npm install
+
+FROM node:20-alpine AS builder
+WORKDIR /repo
+COPY --from=deps /repo/node_modules ./node_modules
+COPY package.json package-lock.json* ./
+COPY apps/web ./apps/web
+WORKDIR /repo/apps/web
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY --from=builder /repo/apps/web/.next ./.next
+COPY --from=builder /repo/apps/web/public ./public 2>/dev/null || true
+COPY --from=builder /repo/apps/web/package.json ./
+COPY --from=builder /repo/node_modules ./node_modules
+EXPOSE 3000
+CMD ["npx", "next", "start", "-p", "3000"]

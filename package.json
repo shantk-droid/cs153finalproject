@@ -1,0 +1,20 @@
+{
+  "name": "inventory-optimizer",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Inventory optimizer monorepo — Next.js web + FastAPI api + M5 calibration.",
+  "workspaces": ["apps/web"],
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "dev:web": "npm run -w @inventory-optimizer/web dev",
+    "build:web": "npm run -w @inventory-optimizer/web build",
+    "lint:web": "npm run -w @inventory-optimizer/web lint",
+    "typecheck:web": "npm run -w @inventory-optimizer/web typecheck",
+    "test:api": "cd apps/api && pytest",
+    "build:m5": "bash scripts/build_m5_calibration.sh"
+  },
+  "engines": {
+    "node": ">=20",
+    "npm": ">=10"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "label_classes": [
+    "intermittent",
+    "lumpy",
+    "seasonal",
+    "smooth"
+  ],
+  "feature_cols": [
+    "n_obs",
+    "zero_pct",
+    "cv_demand",
+    "cv_nonzero_demand",
+    "acf_lag_7",
+    "acf_lag_28",
+    "acf_lag_365",
+    "trend_slope_pct",
+    "last_90d_vs_baseline_ratio"
+  ],
+  "n_train": 4000,
+  "n_val": 1000,
+  "val_accuracy": 0.995
+}

@@ -1,0 +1,49 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=local-demo
+      - CORS_ORIGINS=http://localhost:3000
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-sonnet-4-6}
+      - DATA_DIR=/app/data/datasets
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - LOG_FORMAT=${LOG_FORMAT:-human}
+    volumes:
+      - ../data:/app/data
+      - ../apps/api/m5/artifacts:/app/apps/api/m5/artifacts:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health',timeout=2).status==200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MODAL_API_URL=http://api:8000
+      - NEXT_PUBLIC_API_URL=http://api:8000
+      - DEMO_PASSWORD=${DEMO_PASSWORD:-}
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    profiles:
+      - jobs
+    restart: unless-stopped

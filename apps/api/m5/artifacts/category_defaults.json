@@ -1,0 +1,74 @@
+{
+  "FOODS_1": {
+    "holding_cost_rate": 0.32,
+    "order_cost_default": 35,
+    "markup_default": 1.45,
+    "default_lead_time_days": 4,
+    "perishable": true,
+    "review_period_default_days": 7,
+    "avg_unit_price_m5": 3.38
+  },
+  "FOODS_2": {
+    "holding_cost_rate": 0.32,
+    "order_cost_default": 35,
+    "markup_default": 1.45,
+    "default_lead_time_days": 4,
+    "perishable": true,
+    "review_period_default_days": 7,
+    "avg_unit_price_m5": 4.12
+  },
+  "FOODS_3": {
+    "holding_cost_rate": 0.32,
+    "order_cost_default": 35,
+    "markup_default": 1.45,
+    "default_lead_time_days": 4,
+    "perishable": true,
+    "review_period_default_days": 7,
+    "avg_unit_price_m5": 2.82
+  },
+  "HOBBIES_1": {
+    "holding_cost_rate": 0.25,
+    "order_cost_default": 50,
+    "markup_default": 1.6,
+    "default_lead_time_days": 14,
+    "perishable": false,
+    "review_period_default_days": 7,
+    "avg_unit_price_m5": 6.21
+  },
+  "HOBBIES_2": {
+    "holding_cost_rate": 0.25,
+    "order_cost_default": 50,
+    "markup_default": 1.6,
+    "default_lead_time_days": 14,
+    "perishable": false,
+    "review_period_default_days": 7,
+    "avg_unit_price_m5": 2.77
+  },
+  "HOUSEHOLD_1": {
+    "holding_cost_rate": 0.25,
+    "order_cost_default": 50,
+    "markup_default": 1.6,
+    "default_lead_time_days": 10,
+    "perishable": false,
+    "review_period_default_days": 7,
+    "avg_unit_price_m5": 5.11
+  },
+  "HOUSEHOLD_2": {
+    "holding_cost_rate": 0.25,
+    "order_cost_default": 50,
+    "markup_default": 1.6,
+    "default_lead_time_days": 10,
+    "perishable": false,
+    "review_period_default_days": 7,
+    "avg_unit_price_m5": 5.82
+  },
+  "_default": {
+    "holding_cost_rate": 0.25,
+    "order_cost_default": 50,
+    "markup_default": 1.5,
+    "default_lead_time_days": 14,
+    "perishable": false,
+    "review_period_default_days": 14,
+    "avg_unit_price_m5": 5.0
+  }
+}

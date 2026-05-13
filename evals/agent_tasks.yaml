@@ -1,0 +1,244 @@
+# Agent task suite — 30 tasks across single-agent + multi-agent paths.
+#
+# Run all:
+#   python -m apps.api.llm.agent_eval --dataset-id <id>
+# Single-agent only (faster regression check):
+#   python -m apps.api.llm.agent_eval --dataset-id <id> --mode single
+# Skip judge (avoids Haiku cost on free-form tasks):
+#   python -m apps.api.llm.agent_eval --dataset-id <id> --no-judge
+#
+# CI thresholds: 90% single-agent, 75% multi-agent. The lower multi-agent threshold reflects
+# LLM-as-judge variance; tighten after ≥3 runs of stable data.
+#
+# Schema:
+#   id: short identifier
+#   question: what the user asks
+#   mode: "single" | "multi" (default: "single")
+#   expect_tools: at least one of these MUST be called
+#   expect_tools_all: ALL of these MUST be called
+#   expect_no_tools: tools that MUST NOT be called
+#   expect_text_contains_any: at least one substring (case-insensitive) in final answer
+#   expect_specialists: (multi) at least these specialists invoked
+#   expect_handoffs: (multi) minimum agent_dispatch events
+#   judge_rubric.expected_summary: free-form tasks → judge.py scores grounding/completeness/conciseness/calibration
+
+questions:
+  # ---------- Single-agent tasks (12) ----------
+  - id: portfolio-overview
+    question: "How many SKUs are in this dataset and what's the total annual revenue?"
+    mode: single
+    expect_tools: ["get_aggregate_stats"]
+    expect_text_contains_any: ["sku", "$", "revenue"]
+
+  - id: top-revenue-skus
+    question: "What are the top 5 SKUs by annual revenue?"
+    mode: single
+    expect_tools: ["query_skus"]
+    expect_text_contains_any: ["sku-", "$", "top"]
+
+  - id: forecast-single-sku
+    question: "What's the demand forecast for SKU-00061 over the next 12 weeks?"
+    mode: single
+    expect_tools: ["get_forecast"]
+    expect_text_contains_any: ["forecast", "week", "interval", "mape", "crps"]
+
+  - id: reorder-recommendation
+    question: "How much should I reorder for SKU-00061 at a 95% service level?"
+    mode: single
+    expect_tools: ["compute_reorder"]
+    expect_text_contains_any: ["order", "reorder point", "safety", "stockout"]
+
+  - id: scenario-lead-time-double
+    question: "If lead times double for SKU-00061, how much extra safety stock do I need?"
+    mode: single
+    expect_tools: ["run_scenario"]
+    expect_text_contains_any: ["safety stock", "lead time", "double"]
+
+  - id: abc-class-filter
+    question: "List my A-class SKUs."
+    mode: single
+    expect_tools: ["query_skus"]
+    expect_text_contains_any: ["a-class", "abc", "sku-"]
+
+  - id: data-quality-score
+    question: "What's my data quality score?"
+    mode: single
+    expect_tools: ["get_data_quality_report"]
+    expect_text_contains_any: ["quality", "score", "completeness", "plausibility"]
+
+  - id: compare-to-m5
+    question: "Is SKU-00061's demand pattern normal compared to retail benchmarks?"
+    mode: single
+    expect_tools: ["compare_to_m5"]
+    expect_text_contains_any: ["normal", "percentile", "compared", "m5"]
+
+  - id: chart-demand-by-category
+    question: "Show me total demand by category as a bar chart."
+    mode: single
+    expect_tools_all: ["analyze_dataframe", "make_chart"]
+    expect_text_contains_any: ["category", "demand", "chart"]
+
+  - id: chart-demand-over-time
+    question: "Plot total weekly demand over time as a line chart."
+    mode: single
+    expect_tools_all: ["analyze_dataframe", "make_chart"]
+    expect_text_contains_any: ["over time", "weekly", "trend", "demand", "line"]
+
+  - id: aggregate-supplier
+    question: "Which supplier do I rely on most by revenue?"
+    mode: single
+    expect_tools: ["analyze_dataframe", "query_skus", "get_aggregate_stats"]
+    expect_text_contains_any: ["supplier", "revenue", "$"]
+
+  - id: low-history-skus
+    question: "Do I have any SKUs with too little history to forecast confidently?"
+    mode: single
+    expect_tools: ["get_aggregate_stats", "get_data_quality_report"]
+    expect_text_contains_any: ["history", "low", "cold", "observation", "shrinkage"]
+
+  # ---------- Multi-agent tasks (12) ----------
+  - id: plan-reorder-with-budget
+    question: "Plan next week's reorders for me with a $30,000 budget cap."
+    mode: multi
+    expect_tools: ["plan_reorder_week"]
+    expect_specialists: ["buyer"]
+    expect_handoffs: 1
+    expect_text_contains_any: ["$", "sku", "budget", "deferred", "week"]
+
+  - id: plan-and-stress
+    question: "Plan this week's reorders with a $50k cap, then stress test the top 3 line items if lead times double."
+    mode: multi
+    expect_specialists: ["buyer", "risk"]
+    expect_handoffs: 2
+    expect_text_contains_any: ["$", "sku", "stress", "lead time", "risk"]
+
+  - id: forecast-then-risk
+    question: "Forecast the top revenue SKU and tell me how risky a 99% service-level commitment is."
+    mode: multi
+    expect_specialists: ["forecaster", "risk"]
+    expect_handoffs: 2
+    expect_text_contains_any: ["forecast", "99%", "service", "risk", "interval"]
+
+  - id: supplier-risk-and-buy
+    question: "Which supplier's lead times look risky in the last 8 weeks, and what should I order from them this week?"
+    mode: multi
+    expect_specialists: ["risk", "buyer"]
+    expect_handoffs: 2
+    expect_text_contains_any: ["supplier", "lead time", "$", "order"]
+
+  - id: cold-start-and-plan
+    question: "For the cold-start SKUs in this dataset, what's the safest reorder plan? Walk me through the forecasting limitations first."
+    mode: multi
+    expect_specialists: ["forecaster", "buyer"]
+    expect_handoffs: 2
+    expect_text_contains_any: ["cold", "history", "shrinkage", "order"]
+
+  - id: top3-deep-dive
+    question: "Deep-dive my top 3 SKUs: forecast each one, flag any with regime breaks, and tell me which to expedite."
+    mode: multi
+    expect_specialists: ["forecaster", "risk", "buyer"]
+    expect_handoffs: 3
+    expect_text_contains_any: ["forecast", "regime", "expedite", "sku"]
+
+  - id: weekly-plan-justified
+    question: "Build a $25k weekly reorder plan and justify each line with a forecast confidence note."
+    mode: multi
+    expect_specialists: ["buyer", "forecaster"]
+    expect_handoffs: 2
+    expect_text_contains_any: ["$", "forecast", "confidence", "interval"]
+
+  - id: dq-and-mitigate
+    question: "What are the biggest data-quality issues, and how should they change my buying decisions this week?"
+    mode: multi
+    expect_specialists: ["risk", "buyer"]
+    expect_handoffs: 2
+    expect_text_contains_any: ["quality", "issue", "order", "caveat"]
+
+  - id: ledger-coverage-and-act
+    question: "Look at the conformal coverage diagnostics for my top SKU and tell me if I should trust the forecast for a 4-week buy."
+    mode: multi
+    expect_specialists: ["risk", "forecaster"]
+    expect_handoffs: 2
+    expect_text_contains_any: ["coverage", "conformal", "trust", "forecast"]
+
+  - id: alternative-suppliers
+    question: "If my biggest supplier's lead times widened by 50%, what would my plan look like for next week's reorders?"
+    mode: multi
+    expect_specialists: ["risk", "buyer"]
+    expect_handoffs: 2
+    expect_text_contains_any: ["supplier", "lead", "plan", "$"]
+
+  - id: full-decomposition
+    question: "Give me a comprehensive plan for this week: what to buy, what risks to watch, and what the forecast says."
+    mode: multi
+    expect_specialists: ["forecaster", "risk", "buyer"]
+    expect_handoffs: 3
+    expect_text_contains_any: ["buy", "risk", "forecast"]
+
+  - id: dq-then-plan-then-explain
+    question: "Run a DQ check, then plan reorders, then explain why your top line item is the top one."
+    mode: multi
+    expect_specialists: ["risk", "buyer"]
+    expect_handoffs: 2
+    expect_text_contains_any: ["quality", "plan", "$", "reason"]
+
+  # ---------- Free-form tasks with judge rubric (6) ----------
+  - id: free-portfolio-summary
+    question: "Walk me through my inventory portfolio — what's healthy, what needs attention?"
+    mode: single
+    judge_rubric:
+      expected_summary: |
+        Should call get_aggregate_stats and/or query_skus. Should cite total SKU count,
+        revenue figure, and the ABC/XYZ heatmap or at least the A-class count. Should call
+        out any concerns (low-history SKUs, anomalies) without inventing them.
+
+  - id: free-where-to-focus
+    question: "Where should I focus this week to reduce stockout risk?"
+    mode: multi
+    judge_rubric:
+      expected_summary: |
+        Should call plan_reorder_week or compute_reorder for top stockout-risk SKUs. Final
+        answer should name 2-5 specific SKUs (real IDs from the dataset), explain the risk
+        in one phrase per SKU, and end with a one-line "do this" recommendation. Honor
+        caveats — if forecasts have low history, surface that.
+
+  - id: free-explain-to-cfo
+    question: "Explain my inventory situation to my CFO in 3 sentences."
+    mode: single
+    judge_rubric:
+      expected_summary: |
+        Should call get_aggregate_stats. Final answer should be tight (≤4 sentences max),
+        executive tone, name specific dollar figures and stockout-risk count. No jargon
+        like "MAPE" or "CRPS" — translate to plain English (e.g., "forecast accuracy is
+        good"). No tool-call dump.
+
+  - id: free-tradeoffs-99
+    question: "I'm thinking about committing to a 99% service level. What am I trading off?"
+    mode: multi
+    judge_rubric:
+      expected_summary: |
+        Should call run_scenario with service_level_target=0.99 on a representative SKU.
+        Final answer must surface the cost tradeoff (holding cost rises with service level)
+        and name the specific dollar impact for the SKU(s) chosen. Should caveat that the
+        per-SKU answer doesn't extrapolate linearly across the portfolio.
+
+  - id: free-supplier-deep-dive
+    question: "Tell me everything I should know about my top supplier before next week's PO cycle."
+    mode: multi
+    judge_rubric:
+      expected_summary: |
+        Should identify the top supplier (likely by revenue or SKU count). Should call
+        analyze_dataframe to slice by supplier, possibly run_scenario or get_data_quality_report.
+        Final answer should cover: supplier identity, share of revenue/SKUs, any data
+        concerns (lead-time variability, recent receipt issues), and a 1-sentence action.
+
+  - id: free-explain-conformal
+    question: "What does conformal coverage mean for my forecasts, and is mine any good?"
+    mode: single
+    judge_rubric:
+      expected_summary: |
+        Educational. Should explain conformal coverage as "the % of actuals that fell inside
+        the predicted interval during backtest" (or equivalent), then call get_forecast on a
+        SKU to surface real coverage numbers from the conformal_coverage list. Should compare
+        empirical to nominal (e.g., "you asked for 95%, you actually got 92% — slight
+        undercoverage"). No fluff — be analytical.
