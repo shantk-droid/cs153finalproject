@@ -54,6 +54,90 @@ unless I'm necessary" on 2026-05-04. Stopping to wait wastes their time.
 
 ---
 
+## Outstanding work (snapshot 2026-05-13)
+
+Read this first when picking up the project — it's the priority queue, sorted
+by who can move each item forward. Update / prune as items land.
+
+### User-only (blocked on credentials or approvals)
+
+1. **Add `SENTRY_DSN` to the `inventory-secrets` Modal secret.** Code path
+   is wired (`observability.init_sentry`); dormant until the secret is set.
+2. **Add `ANTHROPIC_API_KEY` to GitHub repo secrets.** Unblocks the
+   `agent-eval` job in `.github/workflows/ci.yml`.
+3. **Decide on GPU access** if you want the research-track items below.
+   1.7 Chronos LoRA is the highest-leverage; A10 GPU on Modal, ~$2-5/run.
+
+### Highest leverage if I keep shipping
+
+- **Run the agent task suite end-to-end** against a real dataset with API
+  key. The 30 tasks in `evals/agent_tasks.yaml` have only been validated
+  structurally — the LLM-as-judge pass rate hasn't been measured. ~$0.50,
+  ~10 min. Output is the headline pass-rate number for the writeup.
+- **Forecast benchmark on M5 held-out slice (5.1 deferred).** Compare
+  Croston / classical / classical + Chronos / full ensemble / + conformal
+  / + LLMTime on WRMSSE / MASE / pinball. ~3 days. Produces the headline
+  bar chart for the writeup. Existing `apps/api/forecasting/backtest.py`
+  is the foundation; `evals/forecast_benchmarks.py` is a stub to extend.
+- **3.2 SKU features perf**: `ml.py:_build_design_matrix` is ~5 min slow
+  on a 200-SKU panel on first run because every unique SKU gets a fresh
+  Haiku call. Two fixes: (a) parallelize via `concurrent.futures` (~3x,
+  ~30 min); (b) batch into a single Haiku call with one tool emission
+  per SKU (~10x, ~2h). Cache covers subsequent calls, but first-run UX
+  on a new dataset is the bottleneck.
+
+### Research track — CPU-only (no GPU needed)
+
+- **1.2 Stacking meta-learner** — LightGBM on out-of-fold pinball losses
+  → per-(SKU, horizon) ensemble weights. Wires into `ensemble.py`'s
+  `crps_weights()` as a `weights_meta` source. ~2 days.
+- **1.6 Hierarchical Bayesian** — NumPyro NUTS on CPU. Replaces
+  `bayes.py`'s closed-form Poisson/Gamma with SKU < Category <
+  Department partial pooling. ~3 days.
+- **1.8 MDN demand head** — small MLP that takes ensemble output and
+  emits a 3-component NegBin mixture. ~2 days.
+- **1.9 Bayesian lead-time per (supplier, SKU)** — hierarchical Gamma
+  priors, posterior update from receipt history; surfaced on the
+  supplier scorecard. ~2 days.
+- **1.12 Probabilistic hierarchical reconciliation** — upgrade from
+  MinT-shrink (point) via `hierarchicalforecast` library. ~2 days.
+
+### Research track — GPU needed (user approval first)
+
+- **1.7 Chronos LoRA fine-tune** — A10 GPU on Modal, ~2h, $2-5. Train a
+  parameter-efficient LoRA adapter on M5 retail (5K SKUs × 1.9K days).
+  Output is `chronos_lora_retail.pt` (<10 MB) that ships with M5
+  artifacts and wires into `forecasting/foundation.py`. Strongest "we
+  trained" research-track story.
+- **1.11 N-BEATS-Interpretable** — GPU helpful, CPU OK. Replaces /
+  augments `forecasting/decompose.py` STL with deep-learning
+  decomposition.
+
+### Smaller polish
+
+- **5.3 Coverage diagnostics admin page** — visualize empirical conformal
+  coverage per (horizon, level, profile). ~1 day. The data is already
+  produced by `_per_horizon_coverage`; just needs a frontend page.
+- **3.10 Extended thinking surfacing** — `enable_thinking=True` exists on
+  `run_chat_blocking`. Surface the reasoning chain in the agent lane
+  (collapsible). ~1 day.
+
+### Operational debt
+
+- **`evals/agent_tasks.yaml` pass-rate baseline**: run it 3 times and
+  record the multi-agent pass rate before declaring the 75% CI threshold
+  binding. LLM-as-judge has ~5-10% run-to-run variance.
+- **3.2 perf fix** (see above).
+
+### Default when nothing else is specified
+
+The natural next step is **"run the agent task suite + forecast
+benchmark."** That's what turns the multi-agent system from "built" into
+"measured" — and produces the headline numbers for the writeup. If the
+user mentions Chronos LoRA, switch to that instead.
+
+---
+
 ## Deployment topology
 
 This project has **two services that must be deployed separately**. The web
