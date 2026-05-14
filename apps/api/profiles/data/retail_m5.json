@@ -1,0 +1,20 @@
+{
+  "id": "retail_m5",
+  "label": "Retail / consumer goods",
+  "description": "Grocery, CPG, multi-store retail. Calibrated on Walmart M5.",
+  "version": "1.0",
+  "bands": {
+    "cv_demand":            {"p2": 0.40,  "p10": 0.65,  "p90": 3.20, "p98": 4.50},
+    "intermittency_rate":   {"p2": 0.02,  "p10": 0.08,  "p90": 0.88, "p98": 0.97},
+    "regime_shift_score":   {"p2": 0.01,  "p10": 0.03,  "p90": 0.55, "p98": 0.75},
+    "trend_slope_pct":      {"p2": 0.0,   "p10": 0.02,  "p90": 0.50, "p98": 0.80},
+    "seasonality_strength": {"p2": 0.02,  "p10": 0.05,  "p90": 0.70, "p98": 0.85}
+  },
+  "centroid": {
+    "cv_demand": 1.85,
+    "intermittency_rate": 0.62,
+    "regime_shift_score": 0.18,
+    "trend_slope_pct": 0.10,
+    "seasonality_strength": 0.20
+  }
+}

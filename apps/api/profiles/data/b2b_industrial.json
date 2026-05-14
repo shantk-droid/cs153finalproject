@@ -1,0 +1,20 @@
+{
+  "id": "b2b_industrial",
+  "label": "B2B industrial",
+  "description": "Distributors, manufacturers, wholesale. Lumpier orders, higher intermittency, weaker seasonality, more stable trend.",
+  "version": "1.0",
+  "bands": {
+    "cv_demand":            {"p2": 0.50,  "p10": 0.80,  "p90": 2.50, "p98": 3.50},
+    "intermittency_rate":   {"p2": 0.10,  "p10": 0.20,  "p90": 0.85, "p98": 0.95},
+    "regime_shift_score":   {"p2": 0.01,  "p10": 0.03,  "p90": 0.30, "p98": 0.45},
+    "trend_slope_pct":      {"p2": 0.0,   "p10": 0.02,  "p90": 0.40, "p98": 0.60},
+    "seasonality_strength": {"p2": 0.0,   "p10": 0.02,  "p90": 0.30, "p98": 0.45}
+  },
+  "centroid": {
+    "cv_demand": 1.40,
+    "intermittency_rate": 0.55,
+    "regime_shift_score": 0.15,
+    "trend_slope_pct": 0.15,
+    "seasonality_strength": 0.10
+  }
+}

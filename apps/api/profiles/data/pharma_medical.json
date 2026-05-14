@@ -1,0 +1,20 @@
+{
+  "id": "pharma_medical",
+  "label": "Pharma / medical",
+  "description": "Prescription, OTC, medical devices. Very stable for chronic meds, moderate seasonality (flu/allergy), low regime shifts.",
+  "version": "1.0",
+  "bands": {
+    "cv_demand":            {"p2": 0.20,  "p10": 0.30,  "p90": 1.20, "p98": 1.80},
+    "intermittency_rate":   {"p2": 0.00,  "p10": 0.02,  "p90": 0.30, "p98": 0.45},
+    "regime_shift_score":   {"p2": 0.01,  "p10": 0.02,  "p90": 0.30, "p98": 0.50},
+    "trend_slope_pct":      {"p2": 0.0,   "p10": 0.02,  "p90": 0.30, "p98": 0.50},
+    "seasonality_strength": {"p2": 0.0,   "p10": 0.02,  "p90": 0.50, "p98": 0.70}
+  },
+  "centroid": {
+    "cv_demand": 0.65,
+    "intermittency_rate": 0.12,
+    "regime_shift_score": 0.10,
+    "trend_slope_pct": 0.10,
+    "seasonality_strength": 0.15
+  }
+}

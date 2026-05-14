@@ -1,0 +1,20 @@
+{
+  "id": "spare_parts_mro",
+  "label": "Spare parts / MRO",
+  "description": "Replacement parts, intermittent service demand. Extreme intermittent demand, very high CV, low seasonality.",
+  "version": "1.0",
+  "bands": {
+    "cv_demand":            {"p2": 0.80,  "p10": 1.50,  "p90": 6.00, "p98": 8.00},
+    "intermittency_rate":   {"p2": 0.30,  "p10": 0.55,  "p90": 0.96, "p98": 0.99},
+    "regime_shift_score":   {"p2": 0.02,  "p10": 0.05,  "p90": 0.45, "p98": 0.65},
+    "trend_slope_pct":      {"p2": 0.0,   "p10": 0.0,   "p90": 0.50, "p98": 0.80},
+    "seasonality_strength": {"p2": 0.0,   "p10": 0.0,   "p90": 0.20, "p98": 0.35}
+  },
+  "centroid": {
+    "cv_demand": 3.50,
+    "intermittency_rate": 0.85,
+    "regime_shift_score": 0.18,
+    "trend_slope_pct": 0.20,
+    "seasonality_strength": 0.05
+  }
+}

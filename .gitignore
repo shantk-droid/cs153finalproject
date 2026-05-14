@@ -44,6 +44,10 @@ apps/api/m5/raw/
 !apps/api/m5/artifacts/
 !apps/api/m5/artifacts/**
 
+# Reference profiles ARE committed (small JSON, used by the DQ scorer)
+!apps/api/profiles/data/
+!apps/api/profiles/data/**
+
 # Test fixtures live in tests/, are tiny, and ARE committed
 !apps/api/tests/fixtures/
 !apps/api/tests/fixtures/**

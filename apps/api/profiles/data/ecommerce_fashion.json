@@ -1,0 +1,20 @@
+{
+  "id": "ecommerce_fashion",
+  "label": "E-commerce / fashion",
+  "description": "DTC, marketplaces, fashion cycles. Higher CV (viral spikes), heavier seasonality, more regime shifts.",
+  "version": "1.0",
+  "bands": {
+    "cv_demand":            {"p2": 0.50,  "p10": 0.85,  "p90": 4.20, "p98": 6.00},
+    "intermittency_rate":   {"p2": 0.05,  "p10": 0.15,  "p90": 0.75, "p98": 0.92},
+    "regime_shift_score":   {"p2": 0.05,  "p10": 0.10,  "p90": 0.65, "p98": 0.85},
+    "trend_slope_pct":      {"p2": 0.0,   "p10": 0.05,  "p90": 0.80, "p98": 1.20},
+    "seasonality_strength": {"p2": 0.02,  "p10": 0.05,  "p90": 0.85, "p98": 0.95}
+  },
+  "centroid": {
+    "cv_demand": 2.40,
+    "intermittency_rate": 0.45,
+    "regime_shift_score": 0.35,
+    "trend_slope_pct": 0.30,
+    "seasonality_strength": 0.30
+  }
+}
