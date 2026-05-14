@@ -69,6 +69,11 @@ logs/
 
 # Coverage
 .coverage
+coverage.json
 htmlcov/
 coverage.xml
 .nyc_output/
+
+# Claude Code local state (per-machine, not for sharing)
+.claude/settings.local.json
+.claude/worktrees/
