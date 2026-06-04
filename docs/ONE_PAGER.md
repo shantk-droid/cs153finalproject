@@ -2,8 +2,8 @@
 
 **Built by:** Shant Koutnouyan
 **Class:** CS 153 final project, Spring 2026
-**Live URL:** *(filled in after Vercel deploy)*
-**Source:** *(GitHub link)*
+**Live URL:** https://web-delta-one-65.vercel.app
+**Source:** https://github.com/shantk-droid/cs153finalproject
 
 ---
 
@@ -39,7 +39,7 @@ Three layers connected by HTTP, every piece independently testable.
 | Rate limits + Sentry stub + structured logging + extended /health | ✓ |
 | Single-password gate via Next.js middleware | ✓ |
 | docker-compose local fallback | ✓ |
-| 168 Python tests | ✓ |
+| 272 Python tests | ✓ |
 | TS strict typecheck | ✓ |
 
 ## Stack
@@ -51,8 +51,8 @@ Three layers connected by HTTP, every piece independently testable.
 - **Observability:** structlog + Sentry (optional) + extended `/health`
 
 ## Numbers
-- 14-day plan, **168/168 Python tests** passing, **TypeScript strict** clean
-- **143 files** across `apps/web` + `apps/api` + `evals` + `infra`
+- **272/272 Python tests** passing, **TypeScript strict** clean
+- **228 files** across `apps/web` + `apps/api` + `evals` + `infra`
 - M5 calibration shipped as 6 versioned artifacts (~600 KB) baked into the deploy image
 - Chat-layer eval: $0.59 / 20 questions, ~11s/question average, 95–100% pass rate depending on run
 - Forecast latency: 0.2s / classical-only, 5–7s / full ensemble with foundation

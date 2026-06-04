@@ -63,7 +63,7 @@ Highlight: extended thinking budget is on (1024 tokens), prompt caching is wired
 Action: click "Export XLSX" in the dashboard header. File downloads.
 
 **3:50 — 4:00 · Tech & link**
-> "Live URL is in the description. Built with Next.js + FastAPI on Vercel + Modal. 168 tests, full CI. Source on GitHub."
+> "Live URL is in the description. Built with Next.js + FastAPI on Vercel + Modal. 272 tests, full CI. Source on GitHub."
 
 ## What to say if asked
 

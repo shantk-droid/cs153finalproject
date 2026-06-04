@@ -506,6 +506,61 @@ v1 is single-dataset, password-gated, scoped for the demo.
 
 ---
 
+## AI usage disclosure
+
+Per the CS 153 AI policy, here is how and where AI tools were used.
+
+- **Built with Claude Code (Anthropic).** The codebase was developed across a
+  14-day MVP and a subsequent MVP+ expansion using Claude Code as a
+  pair-programming agent — scaffolding, implementation, tests, refactors, and
+  deployment were done in collaboration with Claude (Sonnet). The day-by-day
+  build log, design decisions, and working context are preserved in
+  [CLAUDE.md](CLAUDE.md) and its linked plan files; the commit history on
+  `main` is the development artifact. No external application or starter
+  template was forked — the application code is original to this project.
+- **Claude in the running product.** Several runtime features call the
+  Anthropic API (Claude Sonnet 4.6 + Haiku): the multi-agent chat (Router /
+  Planner / Forecaster–Risk–Buyer specialists), the anomaly explainer, the
+  auto-plan agent, the scheduled briefing, the dashboard tour, NL-to-SQL,
+  LLM-extracted SKU features, and the optional LLMTime forecaster. Every one
+  of these has a deterministic fallback, so the product runs with the key
+  unset.
+- **Design boundary — grounded, not generated.** The LLM is never trusted with
+  numbers that matter. Anomalies are detected deterministically server-side and
+  the model only writes the prose; the auto-plan agent's output is forced
+  through a typed tool and re-validated line-by-line against the panel (sku_id
+  existence, MOQ + case-pack rounding, unit_cost re-fetched). The LLM never
+  sets prices or quantities.
+
+## Citations & acknowledgements
+
+- **M5 Forecasting / Walmart dataset** — Makridakis, Spiliotis &
+  Assimakopoulos, the M5 Competition (Kaggle, 2020). Used to fit the cold-start
+  priors, pattern classifier, calendar effects, category defaults, and
+  data-quality reference distributions baked into
+  [apps/api/m5/artifacts/](apps/api/m5/artifacts/).
+- **Nixtla `statsforecast`** — AutoETS / AutoARIMA / Croston / TSB /
+  SeasonalNaive classical baselines.
+- **Amazon `chronos-forecasting` (Chronos-Bolt)** — pretrained time-series
+  foundation model, run on CPU as an ensemble member.
+- **`lightgbm`** — global gradient-boosted forecaster + the M5 pattern
+  classifier.
+- **Nixtla `hierarchicalforecast`** — MinT-shrink reconciliation
+  (Wickramasuriya, Athanasopoulos & Hyndman, 2019).
+- **Split conformal prediction** — Vovk et al.; Angelopoulos & Bates (2021) —
+  for honest empirical interval coverage.
+- **LLMTime** — Gruver, Finzi, Qiu & Wilson, "Large Language Models Are
+  Zero-Shot Time Series Forecasters" (NeurIPS 2023) — basis for the optional
+  LLM-as-forecaster ensemble member.
+- **`numpyro`** — Bayesian shrinkage cold-start.
+- **Frontend** — Next.js, shadcn/ui + Radix primitives, Recharts, Vega-Lite,
+  TanStack Table/Query.
+- **Anthropic Claude** (Sonnet 4.6 + Haiku) — all LLM features above.
+
+Third-party libraries are used via their public package APIs and pinned in
+[apps/api/pyproject.toml](apps/api/pyproject.toml) and
+[apps/web/package.json](apps/web/package.json).
+
 ## Further reading
 
 - [docs/ONE_PAGER.md](docs/ONE_PAGER.md) — class-submission summary, problem
