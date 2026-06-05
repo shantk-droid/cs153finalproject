@@ -11,6 +11,7 @@ export function FrontierPageClient({ datasetId }: { datasetId: string }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [result, setResult] = useState<FrontierResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [sl, setSl] = useState<number>(0.95);
 
   useEffect(() => {
@@ -18,15 +19,21 @@ export function FrontierPageClient({ datasetId }: { datasetId: string }) {
       .then((rs) => {
         setSkus(rs);
         if (rs.length > 0) setSelected(rs[0].sku_id);
-      });
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : "failed to load SKUs"));
   }, [datasetId]);
 
   useEffect(() => {
     if (!selected) return;
     setLoading(true);
+    setError(null);
     fetch(`/api/datasets/${datasetId}/skus/${encodeURIComponent(selected)}/frontier`)
-      .then((r) => r.json() as Promise<FrontierResult>)
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`API ${r.status}`);
+        return (await r.json()) as FrontierResult;
+      })
       .then(setResult)
+      .catch((e) => setError(e instanceof Error ? e.message : "failed to load frontier"))
       .finally(() => setLoading(false));
   }, [selected, datasetId]);
 
@@ -65,6 +72,8 @@ export function FrontierPageClient({ datasetId }: { datasetId: string }) {
         </select>
         {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
       </div>
+
+      {error && <p className="text-xs text-red-600">{error}</p>}
 
       {result && (
         <>

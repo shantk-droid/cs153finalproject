@@ -16,6 +16,17 @@ const HOP_BY_HOP_HEADERS = new Set([
   "upgrade",
   "host",
   "content-length",
+  // Encoding headers are stripped in BOTH directions, deliberately:
+  //  - request `accept-encoding`: Modal's edge offers zstd, which Node's fetch
+  //    cannot decode, so it hands us a still-compressed body that keeps its
+  //    `content-encoding: zstd`. Dropping the header lets undici negotiate only
+  //    gzip/deflate/br (which it decodes transparently).
+  //  - response `content-encoding`: undici has already decoded the body, so a
+  //    surviving encoding header is stale and the browser fails to decode it
+  //    (net::ERR_CONTENT_DECODING_FAILED -> "Failed to fetch"). Vercel
+  //    re-compresses the plain body correctly on the way out.
+  "accept-encoding",
+  "content-encoding",
 ]);
 
 function buildHeaders(req: NextRequest): Headers {
