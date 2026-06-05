@@ -31,6 +31,8 @@ def _per_sku_exposure(
     by_sup = {row["name"]: row for _, row in suppliers_df.iterrows()} if not suppliers_df.empty else {}
     out: dict[str, dict] = {}
     target_sl = sl if sl is not None else 0.95
+    # norm.ppf() diverges to ±Inf at 0/1; clamp so the safety-stock term stays finite.
+    target_sl = min(max(target_sl, 0.01), 0.999)
 
     for sku_id, sub in panel.groupby("sku_id"):
         sub = sub.sort_values("date")
@@ -69,6 +71,12 @@ def _per_sku_exposure(
         stockout_prob = float(1.0 - norm.cdf(z))
         revenue_at_risk = float(stockout_prob * mean_d * unit_price * lt_periods)
         recommended = max(0.0, target_oh - on_hand)
+
+        # A SKU whose recent window is entirely missing demand makes mean_d NaN,
+        # which poisons the var_95/cvar_95 aggregates. FastAPI coerces NaN->null,
+        # so the headline numbers would render blank — drop the unassessable SKU.
+        if not all(math.isfinite(v) for v in (stockout_prob, revenue_at_risk, recommended)):
+            continue
 
         out[sku_id] = {
             "stockout_prob": stockout_prob,
