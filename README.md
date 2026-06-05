@@ -525,13 +525,7 @@ Per the CS 153 AI policy, here is how and where AI tools were used.
   LLM-extracted SKU features, and the optional LLMTime forecaster. Every one
   of these has a deterministic fallback, so the product runs with the key
   unset.
-- **Design boundary — grounded, not generated.** The LLM is never trusted with
-  numbers that matter. Anomalies are detected deterministically server-side and
-  the model only writes the prose; the auto-plan agent's output is forced
-  through a typed tool and re-validated line-by-line against the panel (sku_id
-  existence, MOQ + case-pack rounding, unit_cost re-fetched). The LLM never
-  sets prices or quantities.
-
+  
 ## Citations & acknowledgements
 
 - **M5 Forecasting / Walmart dataset** — Makridakis, Spiliotis &
